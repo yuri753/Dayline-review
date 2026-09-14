@@ -1,0 +1,43 @@
+import {createServer} from 'node:http';
+import {readFile,mkdir} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import assert from 'node:assert/strict';
+const folder=new URL(`./quick-browser-${Date.now()}/`,import.meta.url);await mkdir(folder,{recursive:true});
+const css=await readFile(new URL('./app/src/project-workspace.css',import.meta.url),'utf8');
+const moduleCode=await readFile(new URL('./app/src/quick-menu-motion.js',import.meta.url),'utf8');
+const html=`<style>${css}\n@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}</style><div class="wb-quick-menu" style="left:240px;top:120px">${['Nota','Imagem','Link'].map(t=>`<div class="wb-quick-slot"><button>${t}</button></div>`).join('')}</div><script type="module">import {createQuickMenuMotion} from '/motion.js';window.motion=createQuickMenuMotion(document.querySelector('.wb-quick-menu'),(el,type,fn)=>el.addEventListener(type,fn));</script>`;
+const server=createServer((req,res)=>{res.setHeader('Content-Type',req.url==='/motion.js'?'text/javascript':'text/html');res.end(req.url==='/motion.js'?moduleCode:html);});
+await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+const browser=spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',['--headless','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0',`--user-data-dir=${fileURLToPath(folder)}`,'about:blank'],{windowsHide:true,stdio:'ignore'});
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));let socket;
+try{
+  let port;
+  for(let i=0;i<100;i++){try{port=(await readFile(new URL('DevToolsActivePort',folder),'utf8')).split('\n')[0];break;}catch{await delay(100);}}
+  assert.ok(port,'Edge did not start');
+  const pages=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+  socket=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);
+  await new Promise(resolve=>socket.addEventListener('open',resolve,{once:true}));
+  let id=0;const pending=new Map();
+  socket.addEventListener('message',event=>{const m=JSON.parse(event.data);if(pending.has(m.id)){const {resolve,reject}=pending.get(m.id);pending.delete(m.id);m.error?reject(m.error):resolve(m.result);}});
+  const call=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});socket.send(JSON.stringify({id,method,params}));});
+  const evaluate=async expression=>{const r=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw new Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
+  await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+  await call('Page.navigate',{url:`http://127.0.0.1:${server.address().port}/`});
+  for(let i=0;i<50&&!await evaluate('!!window.motion');i++)await delay(50);
+  await evaluate('motion.open({clientX:220,clientY:200})');await delay(80);
+  const during=await evaluate('[...document.querySelectorAll(".wb-quick-slot")].map(el=>({opacity:Number(getComputedStyle(el).opacity),animations:el.getAnimations().length}))');
+  assert.ok(during[0].opacity>0&&during[0].opacity<1,JSON.stringify(during));assert.ok(during.every(s=>s.animations===1));
+  await delay(650);
+  await call('Input.dispatchMouseEvent',{type:'mouseMoved',x:300,y:166});await delay(220);
+  const hovered=await evaluate('[...document.querySelectorAll("button")].map(el=>el.style.transform)');
+  assert.match(hovered[0],/perspective\(450px\)/);assert.match(hovered[0],/rotateY\(8deg\)/);assert.ok(!hovered[0].includes('rotateX(0deg)'));assert.deepEqual(hovered.slice(1),['','']);
+  await call('Input.dispatchMouseEvent',{type:'mouseMoved',x:20,y:20});await delay(220);
+  const reset=await evaluate('document.querySelector("button").style.transform');
+  assert.match(reset,/translate\(0px, 0px\)/);assert.match(reset,/rotateX\(0deg\)/);assert.match(reset,/rotateY\(0deg\)/);
+  await evaluate('motion.close();motion.open({clientX:220,clientY:200});motion.close();motion.open({clientX:220,clientY:200})');
+  assert.equal(await evaluate('document.getAnimations().length'),3);
+  await evaluate('motion.close()');assert.equal(await evaluate('document.getAnimations().length'),0);
+  console.log('Edge real: entrada gradual, parallax só no botão sob o mouse, retorno ao sair, reabertura e limpeza OK — inclusive com movimento reduzido no sistema.');
+  await call('Browser.close').catch(()=>{});
+}finally{socket?.close();browser.kill();server.close();}
