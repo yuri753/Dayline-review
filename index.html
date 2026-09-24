@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dayline Review</title><link rel="stylesheet" href="review.css">
+</head>
+<body>
+  <header class="site-header"><a href="./" class="brand">dayline<span>review</span></a></header>
+  <main>
+    <section class="preview"><p class="eyebrow">SUA PRÉVIA</p><h1>O que vamos ajustar?</h1><p>Assista ao vídeo e organize seus pedidos de ajuste no quadro ao lado.</p><div id="preview-members" class="preview-members" aria-label="Prévias da equipe" hidden></div><div class="preview-member-context"><strong id="preview-member-title"></strong><span id="preview-member-meta"></span></div><video crossorigin="anonymous" src="seu-video.mp4" controls playsinline preload="metadata" aria-label="Prévia do projeto"></video><div class="video-context"><p id="video-status">Pause no trecho que deseja comentar.</p><button id="timestamp">＋ Comentar este momento</button></div><div class="review-help"><span>01</span><p>Assista à prévia e pause nos detalhes.</p>
+      <span>02</span><p>Clique em “+ Comentar este momento” para adicionar ao quadro uma captura do vídeo com o tempo marcado.</p>
+      <span>03</span><p>Descreva o que deseja mudar. Use imagens, notas, links e desenhos para ajudar a explicar.</p>
+      <span>04</span><p>Ao terminar, clique em “Enviar pedidos de ajuste”.</p></div></section>
+    
+      <section class="review-section" aria-labelledby="board-title">
+      <div class="section-heading"><div><p class="eyebrow">SEU FEEDBACK</p><h2 id="board-title">Espaço de ajustes</h2></div></div>
+      <div class="board-shell">
+        <div class="toolbar" role="toolbar" aria-label="Ferramentas do quadro">
+          <div class="toolbar-tools"><button data-tool="pan" aria-pressed="false" title="Mover o quadro (H)">✥ <span>Mover</span></button><i></i>
+          <button data-add="note">＋ Nota</button><button data-add="comment">Comentário</button><button id="image-add">Imagem</button><button data-add="link">Link</button><button data-add="color">Cor</button><i></i>
+          <button data-tool="draw" aria-pressed="false">✎ Desenhar</button><button data-tool="line" aria-pressed="false">↗ Conectar</button>
+          <label class="ink-label" title="Cor do desenho e das conexões"><input id="ink" type="color" value="#b9d69b" aria-label="Cor do desenho e das conexões"></label><select id="stroke" aria-label="Espessura do traço"><option value="2">Fino</option><option value="4">Médio</option><option value="7">Grosso</option></select>
+          </div><button id="send" class="primary">Enviar pedidos de ajuste <span aria-hidden="true">↗</span></button>
+        </div>
+        <div id="text-tools" class="text-tools" role="toolbar" aria-label="Personalizar cartão" hidden>
+          <select id="text-target" aria-label="Texto a formatar"><option value="text">Texto</option></select>
+          <label class="font-control"><span>Fonte</span><input id="text-font" list="font-options" placeholder="Padrão do site" aria-label="Buscar ou informar fonte"><datalist id="font-options"><option value="Arial"><option value="Georgia"><option value="Verdana"><option value="Tahoma"><option value="Trebuchet MS"><option value="Times New Roman"><option value="Courier New"><option value="Segoe UI"><option value="DM Sans"></datalist></label>
+          <label>Tamanho<input id="text-size" type="number" min="8" max="72" step="1" value="14" aria-label="Tamanho do texto"></label>
+          <button id="text-bold" aria-label="Negrito" aria-pressed="false"><b>B</b></button>
+          <button id="text-italic" aria-label="Itálico" aria-pressed="false"><i>I</i></button>
+          <button id="text-underline" aria-label="Sublinhado" aria-pressed="false"><u>U</u></button>
+          <select id="text-align" aria-label="Alinhamento"><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select>
+          <label>Texto<input id="text-color" type="color" value="#edf0e8" aria-label="Cor do texto"></label>
+          <label>Fundo<input id="card-color" type="color" value="#252d23" aria-label="Cor do cartão"></label>
+        </div>
+
+        <div id="board" tabindex="0" aria-label="Quadro infinito de pedidos de ajuste"><div id="world"><svg id="lines" aria-label="Desenhos e conexões"></svg><div id="cards"></div></div><div id="empty"><span>✧</span><h3>O próximo detalhe começa aqui</h3><p>Adicione uma nota, uma referência ou desenhe sua ideia.</p><button data-add="note">＋ Adicionar primeira nota</button></div></div>
+        <div class="board-footer"><span id="hint">Arraste o fundo para navegar · Role para zoom · Espaço para mover</span><div><button id="delete-selected" title="Excluir seleção (Delete)" aria-label="Excluir seleção">×</button><i></i><button id="undo" title="Desfazer (Ctrl+Z)" aria-label="Desfazer">↶</button><button id="redo" title="Refazer (Ctrl+Shift+Z)" aria-label="Refazer">↷</button><i></i><button id="zoom-out" aria-label="Diminuir zoom">−</button><button id="zoom-reset" title="Enquadrar todos os elementos" aria-label="Enquadrar todos os elementos">100%</button><button id="zoom-in" aria-label="Aumentar zoom">＋</button></div></div>
+      </div><p class="session-note">Seus ajustes ficam nesta página enquanto ela estiver aberta.</p>
+    </section>
+  </main>
+  <input id="image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+  <dialog id="link-dialog"><form id="link-form"><h2>Adicionar referência</h2><label>Endereço do link<input id="link-url" type="url" required placeholder="https://" autofocus></label><div class="dialog-actions"><button type="button" data-close>Cancelar</button><button class="primary">Adicionar link</button></div></form></dialog>
+  <dialog id="send-dialog"><h2>Seus pedidos estão no quadro</h2><p id="send-message"></p><div class="dialog-actions"><button data-close>Voltar ao quadro</button></div></dialog>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <script src="review.js?v=0.6.6.3" defer></script>
+  <script type="module" src="site.js?v=0.6.6.3"></script>
+</body></html>
