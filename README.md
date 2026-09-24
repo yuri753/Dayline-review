@@ -1,34 +1,27 @@
-# Contrato único: quadro de feedback v1
+# Dayline Review
 
-`feedback-canvas.v1.schema.json` é o contrato de intercâmbio entre Dayline Review, Supabase e Dayline. `feedback-canvas.v1.example.json` mostra todos os quatro tipos. O formato não depende do estado interno de nenhum canvas.
+Sirva esta pasta por HTTP/HTTPS para usar a integração com o app. Veja `FEEDBACK-SETUP.md` para publicação, configuração do link e ativação do recebimento no Supabase. Ao abrir um link de comissão, o site consulta o vídeo associado àquela prévia.
 
-## Regras
+Em telas maiores que 980px, o player fica à esquerda e o canvas à direita. Em telas menores, o player fica acima do quadro. O botão “Comentar este momento” pausa o vídeo e captura o frame em um cartão `print`, com `videoTime` em segundos e título em mm:ss. Clicar no tempo do cartão volta àquele trecho. O print e o comentário são uma única etapa de criação no histórico.
 
-- `versao`: exatamente 1. Mudanças incompatíveis exigem outra versão.
-- `blocos`: até 5.000. Cada bloco tem `id`, `tipo`, `x`, `y`, `largura`, `altura` e `conteudo`.
-- Tipos: `nota` (`texto` simples, nunca HTML); `imagem` (`url`, `descricao` opcional); `link` (`url`, `titulo` opcional); `print` (`url`, `tempo_video_segundos`, `descricao` opcional).
-- Print é uma imagem capturada do vídeo, acompanhada do instante em segundos, não um cartão de vídeo.
-- `conexoes`: até 10.000; cada conexão tem `id`, `origem` e `destino`, referenciando IDs de blocos existentes e diferentes. IDs são únicos no documento inteiro; use `crypto.randomUUID()` para novos elementos.
-- Posições são coordenadas do mundo em pixels a zoom 1, aceitando valores negativos. Tamanho é preservado entre os clientes. Pan e zoom são preferências locais de visualização e não fazem parte do documento compartilhado.
-- Imagens/prints usam URLs HTTPS; antes de enviar, faça upload da imagem. Não armazenar `blob:`, caminhos Windows ou base64 neste JSON. As URLs devem ser estáveis; URLs assinadas que expiram precisam ser renovadas pelo serviço de mídia. O consumidor deve validar URLs antes de navegar/carregar e não deve buscar endereços arbitrários em um backend sem proteção contra SSRF.
-- V1 contém somente os quatro tipos solicitados. Comentários podem virar notas. Desenhos e cores não possuem representação própria nesta versão: a futura integração deve oferecer conversão explícita (por exemplo, rasterizar um desenho como imagem), nunca descartá-los silenciosamente.
+O player usa `crossorigin="anonymous"`. Vídeos externos devem responder com `Access-Control-Allow-Origin` adequado (inclusive no armazenamento/CDN). Sem CORS, ou sem um frame carregado, a página informa o erro e não cria um print falso. A captura usa JPEG com lado máximo de 1600px, sem upload automático.
 
-## Supabase
+Selecionar um cartão mostra os controles de fonte, tamanho (8–72), negrito, itálico, sublinhado, alinhamento, cor do texto e fundo. Notas/comentários têm `textStyle`; imagens/prints têm `imageTitleStyle` e `annotationStyle` independentes. Links têm título editável. A fonte digitada precisa estar disponível no navegador; “Fontes do dispositivo” aparece somente quando `queryLocalFonts` existe e requer permissão. A formatação aplica-se ao campo inteiro, como no modelo de campos do app, e participa do desfazer/refazer.
 
-Execute `supabase/migrations/20260912_feedback_canvas.sql` no SQL Editor do projeto remoto **uma vez**, depois da configuração anterior de `chaves_acesso`. O script cria a extensão `pg_jsonschema`, valida o documento, rejeita IDs duplicados/referências inválidas e configura RLS. Uma reaplicação acusa tabela existente e desfaz a transação, sem apagar dados. Não foi executado remotamente nesta alteração.
+O envio usa o contrato v2 em `feedback/contract.js` e a tabela `feedback_envios`. Ele preserva estilos e imagens raster embutidas, com limite de 5 MB por envio. O contrato e a tabela `feedback_canvas` v1 continuam separados e não recebem esse conteúdo.
 
-Tabela `feedback_canvas`: `id uuid`, `id_comissao text unique` (FK de `chaves_acesso`), `quadro jsonb`, `revisao bigint`, `criado_em` e `atualizado_em`. Há um quadro atual por comissão; a revisão não é um histórico de submissões. O banco gera identidade/datas/revisão. Limite do documento: 5 MiB.
+O rascunho do quadro usa apenas memória: fechar/recarregar perde as alterações ainda não enviadas. O envio confirmado fica salvo no Supabase e pode ser aberto no app. Inclui notas, comentários, imagens, links HTTP(S), cores, desenho, conexões, movimento, redimensionamento e histórico. Não inclui tarefas, checklists ou cartões de vídeo.
 
-Para criar, enviar `{ "id_comissao": "...", "quadro": <documento v1> }` por POST. Para atualizar, usar PATCH com `{ "quadro": <documento v1> }`, filtrando pelo ID e pela revisão lida (`id=eq.…&revisao=eq.1`) e solicitando `Prefer: return=representation`. Se voltar zero linhas, recarregar e tratar conflito; não sobrescrever cegamente. A revisão aumenta a cada UPDATE.
+`feedback/site.js` escuta `dayline:submit-adjustments`, valida o conteúdo e envia ao Supabase com a chave da prévia. A confirmação só aparece após o servidor salvar o envio. Falhas preservam o rascunho, e uma nova tentativa do mesmo conteúdo reutiliza o identificador para evitar duplicação. O app mostra novos pedidos no botão Feedback do cliente e permite abrir o canvas com navegação e zoom. A migração SQL precisa ser aplicada antes de usar a integração.
 
-Todas as requisições exigem a configuração pública do Supabase e `x-preview-key` com a chave da comissão. O portador da chave pode ler/criar/editar seu quadro; não pode apagá-lo ou transferi-lo. As políticas permissivas `true` ficam limitadas pela política restritiva `feedback_canvas_chave`.
+Arraste o fundo para navegar, use a roda para zoom. Arraste o cabeçalho dos cartões para movê-los e o canto inferior direito para redimensionar. Conectar exige clicar em dois cartões. Ctrl+Z desfaz e Ctrl+Shift+Z refaz quando o quadro tem foco. Delete remove o elemento selecionado. Em campos de texto, os atalhos nativos do editor são preservados.
 
-## Compatibilidade verificada no código atual
+Esc cancela um gesto ou uma conexão pendente. Arrastes cancelados restauram o estado inicial sem consumir o histórico. O botão de porcentagem enquadra todos os cartões e desenhos. Uma conexão selecionada pode ser removida com o botão × da barra inferior. A ferramenta Desenhar permite desenhar passando pelos cartões; use Selecionar para editar os textos.
 
-O **app ainda precisa de adaptador e carregamento remoto**. `src/workspace-model.js::validateBoard` exige `{version,background,camera,items}`; blocos usam `kind`, `w`, `h`, `text`, `color`. Conexões são itens `kind: "line"` com `from`, `to`, `x2`, `y2`, não uma lista separada. `print` não é um tipo interno. Imagens remotas HTTPS não passam pelo validador atual: é necessário importar a mídia de forma controlada e gerar `mediaPath` ou imagem embutida aceita pelo app. `src/board-storage.js` carrega os quadros locais via `board_load`; não busca `feedback_canvas`.
+## Prévias compartilhadas — Dayline 0.6.6
 
-O site também precisa de um serializador: hoje emite `{version,items,paths,videoTime}` e mantém imagens como data URLs. O fluxo futuro será: upload de imagens → conversão para v1 → gravação na tabela → leitura e validação no app → conversão para o modelo interno e importação da mídia. Os adaptadores devem preservar os IDs e tratar conteúdo não suportado explicitamente. Esta alteração define o contrato e a tabela, não modifica os renderizadores nem declara a integração pronta.
+Quando o link usa o token público de um projeto compartilhado, o site consulta `dayline_collab_preview_public` e mostra apenas os integrantes que já enviaram uma prévia. Todos usam o mesmo link. Cada botão de integrante mostra foto/nome, a revisão atual e um indicador quando aquela prévia ainda aguarda feedback.
 
-Para regenerar o JSON Schema e o SQL a partir da definição única: `node contracts/build-feedback-contract.mjs`. Fonte do SQL: `feedback-canvas.sql.template`. Não editar o schema embutido no SQL manualmente.
+Trocar de integrante muda o vídeo sem trocar a URL. Se houver um rascunho não enviado no quadro, o site pede confirmação antes de limpá-lo. O envio usa `dayline_collab_preview_submit_feedback`, vincula o canvas ao `preview_id` selecionado e mantém o feedback privado no backend. Depois que o servidor confirma o envio, o indicador de “aguardando feedback” daquele integrante some localmente.
 
-Referência: https://supabase.com/docs/guides/database/extensions/pg_jsonschema
+Links individuais antigos continuam usando `chaves_acesso`, `comissao_videos` e `feedback_envios`. Para a experiência compartilhada completa, execute também `contracts/shared-preview-feedback.sql` depois do `UPDATE_TO_0.6.6.sql` do aplicativo.
