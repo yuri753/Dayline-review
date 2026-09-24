@@ -1,4 +1,4 @@
-import {createFeedbackClient,createSharedFeedbackClient} from './transport.js?v=0.6.6.1';
+import {createFeedbackClient,createSharedFeedbackClient} from './transport.js?v=0.6.6.2';
 
 const send=document.querySelector('#send');
 const message=document.querySelector('#send-message');
@@ -59,7 +59,8 @@ function selectPreview(row,{initial=false}={}){
 }
 
 async function connect(){
-  const response=await fetch(new URL('../review-config.json',import.meta.url),{cache:'no-store'});
+  // Resolve from the page so source and flat publication use the same configuration.
+  const response=await fetch(new URL('./review-config.json',document.baseURI),{cache:'no-store'});
   if(!response.ok)throw new Error('A conexão de feedback ainda não foi configurada.');
   const config=await response.json();
   const accessKey=new URLSearchParams(location.search).get('key')||location.pathname.match(/\/feedback\/([0-9a-f-]+)\/?$/i)?.[1];
