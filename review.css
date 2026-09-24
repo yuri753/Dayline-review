@@ -94,3 +94,9 @@ video {min-width:0;max-width:100%;}
   position:relative;
   left:-15px;
 }
+
+/* Dayline 0.6.6 — seletor de prévias por integrante */
+.preview-members{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 12px;margin:0 0 6px;scrollbar-width:thin;scrollbar-color:#53644b transparent}
+.preview-members[hidden]{display:none}.preview-member{position:relative;display:flex;align-items:center;gap:8px;min-width:max-content;padding:6px 10px 6px 6px;border-radius:999px;background:#171c17;border-color:#344033;color:var(--muted)}
+.preview-member[aria-pressed=true]{background:#c4e3aa12;border-color:#8daf78;color:var(--text)}.preview-member img,.preview-member-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:#2a3429;color:#dcebd1;font-size:11px;font-weight:700;border:1px solid #ffffff18;flex:none}.preview-member-name{font-size:11px;font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.preview-member-dot{position:absolute;top:3px;left:31px;width:9px;height:9px;border-radius:50%;background:var(--accent);border:2px solid #171c17;box-sizing:content-box}.preview-member[aria-pressed=true] .preview-member-dot{border-color:#1e281c}.preview-members-empty{margin:4px 0 8px;color:var(--muted);font-size:12px}.preview-member-context{min-height:24px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px}.preview-member-context strong{font-size:12px;font-weight:600;color:var(--text)}.preview-member-context span{font-size:10px;color:var(--muted)}
+@media(max-width:540px){.preview-members{margin-left:-2px;margin-right:-2px}.preview-member{padding-right:9px}.preview-member-name{max-width:105px}.preview-member-context{margin-bottom:7px}}

@@ -23,3 +23,12 @@ O botão **Feedback do cliente** aparece em cada comissão. Um indicador **Novo*
 ## Verificação após ativar
 
 Envie uma nota com uma imagem de teste, confira a confirmação no site, abra a comissão no app e verifique o indicador Novo e o canvas. Envie outra revisão e confira que o aviso reaparece. Teste também falha de rede: o site deve informar erro e conservar o quadro, sem afirmar que enviou.
+
+
+## Dayline 0.6.6 — equipes e link único
+
+Para projetos compartilhados, execute também `contracts/shared-preview-feedback.sql` depois de `UPDATE_TO_0.6.6.sql`. O link é único por projeto e usa o token público de `dayline_collab_preview_links`; ele não usa `x-preview-key`. O site chama `dayline_collab_preview_public`, cria uma aba por integrante que já enviou vídeo e envia o feedback da aba selecionada para `dayline_collab_preview_submit_feedback`.
+
+O indicador na foto significa que a revisão atual daquele integrante ainda aguarda feedback. Ele some somente depois que o Supabase confirma o envio. O backend associa o feedback ao `preview_id` selecionado, então o retorno de um integrante não é exposto como feedback de outro.
+
+Os links individuais antigos continuam funcionando pelo fluxo legado com `x-preview-key`.

@@ -254,5 +254,14 @@
   $('#delete-selected').onclick=()=>{if(selected)remove(selected);focusBoard();};
   const video=document.querySelector('video');video.addEventListener('error',()=>{$('#video-status').textContent='A prévia ainda não foi carregada.';});video.addEventListener('loadedmetadata',()=>{$('#video-status').textContent='Pause no trecho que deseja comentar.';});
   board.addEventListener('dragstart',e=>e.preventDefault());
+  // API mínima para o seletor de integrantes: impede perder um rascunho sem aviso
+  // e limpa somente o quadro local ao trocar de prévia. Nada é persistido no site.
+  window.daylineReviewBoard={
+    hasDraft:()=>items.length>0||paths.length>0,
+    clear:()=>{
+      endDrag(true);items=[];paths=[];assets={};selected=null;connection=null;past.length=0;future.length=0;
+      camera={x:0,y:0,z:1};textField='text';setTool('select');render();historyButtons();
+    }
+  };
   render();
 })();

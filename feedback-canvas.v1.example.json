@@ -1,0 +1,10 @@
+{
+  "versao": 1,
+  "blocos": [
+    {"id":"nota-1","tipo":"nota","x":80,"y":120,"largura":260,"altura":180,"conteudo":{"texto":"Aumentar o título neste trecho."}},
+    {"id":"print-1","tipo":"print","x":420,"y":100,"largura":360,"altura":240,"conteudo":{"url":"https://example.com/prints/frame-24.webp","tempo_video_segundos":24.5,"descricao":"Trecho a ajustar"}},
+    {"id":"imagem-1","tipo":"imagem","x":420,"y":400,"largura":280,"altura":220,"conteudo":{"url":"https://example.com/referencias/composicao.png","descricao":"Referência de composição"}},
+    {"id":"link-1","tipo":"link","x":80,"y":400,"largura":260,"altura":160,"conteudo":{"url":"https://example.com/referencia","titulo":"Referência visual"}}
+  ],
+  "conexoes": [{"id":"conexao-1","origem":"nota-1","destino":"print-1"}]
+}
